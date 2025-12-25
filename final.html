@@ -3,79 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Final Secret</title>
+<title>Final</title>
 
 <style>
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: #0b0b0b;
-  color: white;
-  font-family: system-ui, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
+body{
+  margin:0; min-height:100vh; background:#0b0b0b; color:#fff;
+  font-family:system-ui, sans-serif;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:24px;
 }
-
-.box {
-  width: 90%;
-  max-width: 420px;
-  background: #1a1a1a;
-  border-radius: 20px;
-  padding: 20px;
-  text-align: center;
+.box{
+  width:90%; max-width:420px; background:#1a1a1a;
+  border-radius:20px; padding:20px; text-align:center;
 }
-
-.emoji-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 12px;
+.emoji-tabs{
+  display:flex; flex-wrap:wrap; justify-content:center;
+  gap:14px; margin-top:12px;
 }
-
-.emoji-btn {
-  font-size: 32px;
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  border: none;
-  background: #333;
-  color: white;
+.emoji-btn{
+  font-size:32px; width:64px; height:64px;
+  border-radius:16px; border:none; background:#333; color:#fff;
 }
-
-.emoji-btn.selected {
-  background: #666;
+.emoji-btn.selected{ background:#666; }
+button.main{
+  width:90%; max-width:420px; height:72px; font-size:24px;
+  border-radius:20px; border:none; background:#444; color:#fff;
 }
-
-button.main {
-  width: 90%;
-  max-width: 420px;
-  height: 72px;
-  font-size: 24px;
-  border-radius: 20px;
-  border: none;
-  background: #444;
-  color: white;
-}
-
-.hidden {
-  display: none;
-}
-
-video {
-  width: 92%;
-  max-width: 520px;
-  margin-top: 20px;
-}
+.hidden{ display:none; }
+video{ width:92%; max-width:520px; margin-top:18px; border-radius:16px; }
 </style>
 </head>
 
 <body>
 
-<!-- 暗号エリア -->
 <div id="puzzleArea">
   <div class="box">
     <div>ひとつ目</div>
@@ -90,7 +50,6 @@ video {
   <button class="main" onclick="checkAnswer()">回答</button>
 </div>
 
-<!-- クリア画面 -->
 <div id="clearArea" class="hidden">
   <div class="box">
     <div style="font-size:20px; line-height:1.5;">
@@ -107,40 +66,38 @@ video {
 </div>
 
 <script>
-// =======================
-// Audio
-// =======================
+// ---- AudioContext ----
 let audioCtx;
-function getCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === "suspended") audioCtx.resume();
   return audioCtx;
 }
 
-function playMissSound() {
+function playMissSound(){
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'sawtooth';
+  osc.type = "sawtooth";
   osc.frequency.setValueAtTime(220, ctx.currentTime);
-  gain.gain.setValueAtTime(0.25, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
 
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.4);
+  gain.gain.setValueAtTime(0.25, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + 0.35);
 }
 
-function playSuccessSound() {
+function playSuccessSound(){
+  // stage2 と同じ「最高音」
   const ctx = getCtx();
   const o1 = ctx.createOscillator();
   const o2 = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  o1.type = 'triangle';
-  o2.type = 'sine';
+  o1.type = "triangle";
+  o2.type = "sine";
   o1.frequency.value = 880;
   o2.frequency.value = 1320;
 
@@ -148,72 +105,65 @@ function playSuccessSound() {
   gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.05);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
 
-  o1.connect(gain);
-  o2.connect(gain);
-  gain.connect(ctx.destination);
-
-  o1.start();
-  o2.start();
+  o1.connect(gain); o2.connect(gain); gain.connect(ctx.destination);
+  o1.start(); o2.start();
   o1.stop(ctx.currentTime + 0.8);
   o2.stop(ctx.currentTime + 0.8);
 }
 
-// =======================
-// Emoji logic
-// =======================
-const correct1 = '🧳';
-const correct2 = '🍢';
+// ---- 絵文字暗号 ----
+const correct1 = "🧳";
+const correct2 = "🍢";
 
-const dummyEmojis = ['🍎','🎈','🐸','🚲','🪐','📦','🦷','🍋'];
+// ダミー候補（この中からランダムに4つずつ）
+const dummyPool = ["🍎","🎈","🐸","🚲","🪐","📦","🦷","🍋","🎮","🧤"];
 
 let select1 = null;
 let select2 = null;
 
-function createBox(id, correct, selectFunc) {
-  const box = document.getElementById(id);
+function fillBox(elemId, correct, setter){
+  const box = document.getElementById(elemId);
   const list = [correct];
 
-  while (list.length < 5) {
-    const e = dummyEmojis[Math.floor(Math.random() * dummyEmojis.length)];
-    if (!list.includes(e)) list.push(e);
+  while(list.length < 5){
+    const e = dummyPool[Math.floor(Math.random()*dummyPool.length)];
+    if(!list.includes(e)) list.push(e);
   }
 
-  list.sort(() => Math.random() - 0.5);
+  // シャッフル
+  list.sort(()=>Math.random()-0.5);
 
-  list.forEach(emoji => {
-    const btn = document.createElement('button');
-    btn.className = 'emoji-btn';
+  list.forEach(emoji=>{
+    const btn = document.createElement("button");
+    btn.className = "emoji-btn";
     btn.textContent = emoji;
-    btn.onclick = () => {
-      [...box.children].forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectFunc(emoji);
+    btn.onclick = ()=>{
+      getCtx();
+      [...box.children].forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+      setter(emoji);
     };
     box.appendChild(btn);
   });
 }
 
-createBox('box1', correct1, e => select1 = e);
-createBox('box2', correct2, e => select2 = e);
+fillBox("box1", correct1, e=>select1=e);
+fillBox("box2", correct2, e=>select2=e);
 
-// =======================
-// 判定
-// =======================
-function checkAnswer() {
+function checkAnswer(){
   getCtx();
-
-  if (select1 === correct1 && select2 === correct2) {
-    playSuccessSound();
-    document.getElementById('puzzleArea').classList.add('hidden');
-    document.getElementById('clearArea').classList.remove('hidden');
-  } else {
-    playMissSound();
+  if(select1 === correct1 && select2 === correct2){
+    try{ playSuccessSound(); }catch(e){}
+    document.getElementById("puzzleArea").classList.add("hidden");
+    document.getElementById("clearArea").classList.remove("hidden");
+  }else{
+    try{ playMissSound(); }catch(e){}
   }
 }
 
-function playFinalVideo() {
-  const v = document.getElementById('finalVideo');
-  v.classList.remove('hidden');
+function playFinalVideo(){
+  const v = document.getElementById("finalVideo");
+  v.classList.remove("hidden");
   v.currentTime = 0;
   v.play();
 }
