@@ -23,23 +23,27 @@ button{
 video{ width:100%; border-radius:16px; }
 
 .hint{
-  width:90%;
-  max-width:420px;
+  width:90%; max-width:420px;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 18px;
   padding: 14px 16px;
   line-height: 1.5;
 }
-.hint-title{
-  font-weight:800;
-  margin-bottom:8px;
-  opacity:0.95;
-}
+.hint-title{ font-weight:800; margin-bottom:8px; opacity:0.95; }
 .hint-code{
   font-weight:900;
-  font-size:28px;
-  letter-spacing: 0.22em;
+  font-size:26px;
+  letter-spacing: 0.18em;
+  word-break: break-all;
+}
+
+/* ✅ 次へボタンを分かりやすい赤に */
+#nextBtn{
+  background:#e11d48; /* 赤 */
+  color:#fff;
+  height:64px;
+  font-size:22px;
 }
 </style>
 </head>
@@ -52,7 +56,6 @@ video{ width:100%; border-radius:16px; }
   <button onclick="press('うんこぽ')">うんこぽ</button>
 </div>
 
-<!-- ✅ 対応表は出さず、数字列のみ -->
 <div id="hint1" class="hint hidden">
   <div class="hint-title">ヒント</div>
   <div class="hint-code" id="hint1Code"></div>
@@ -67,7 +70,7 @@ video{ width:100%; border-radius:16px; }
 </div>
 
 <script>
-const VERSION = "20251226e";
+const VERSION = "20251226g";
 
 // ---- AudioContext ----
 let audioCtx;
@@ -120,21 +123,24 @@ function playTapSound(){
   osc.start(); osc.stop(ctx.currentTime + 0.12);
 }
 
-// ---- 暗号 ----
-const correctCode = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
+/* ✅ 難しすぎず、たまたま当たらない程度（長さ7） */
+const correctCode = [
+  'ドリル','コーポ','ドリル','うんこぽ','コーポ','ドリル','コーポ'
+];
+
 let input = [];
 
 const video = document.getElementById("video1");
 const nextBtn = document.getElementById("nextBtn");
 
-// ✅ 数字列ヒント（内部対応表。画面には出さない）
+// 数字列ヒント（内部対応。画面には数字列だけ）
 const map1 = { 'ドリル': '1', 'コーポ': '2', 'うんこぽ': '3' };
 document.getElementById("hint1Code").textContent =
   correctCode.map(x => map1[x]).join('');
 
-// ✅ ヒント出現回数
+// ✅ ヒントは早め
 let pressCount = 0;
-const hintShowAt = 12;
+const hintShowAt = 5;
 const hintElem = document.getElementById("hint1");
 
 function press(word){
