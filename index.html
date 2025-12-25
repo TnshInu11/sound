@@ -37,13 +37,22 @@ video {
   width: 92%;
   max-width: 520px;
 }
+  
+.button-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
 </style>
 </head>
 
 <body>
 
 <!-- 音声ボタン -->
-<div>
+<div class="button-area">
   <button onclick="press('ドリル')">ドリル</button>
   <button onclick="press('コーポ')">コーポ</button>
   <button onclick="press('うんこぽ')">うんこぽ</button>
