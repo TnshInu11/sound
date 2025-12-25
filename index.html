@@ -86,25 +86,22 @@ function speak(text) {
 // =======================
 // 最高音（第1・第2 共通）
 // =======================
-function playUltimateSuccessSound() {
-  const ctx = getAudioCtx();
+function playSuccessSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
 
   const osc1 = ctx.createOscillator();
   const osc2 = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc1.type = 'sine';
-  osc2.type = 'triangle';
+  osc1.type = 'triangle';
+  osc2.type = 'sine';
 
   osc1.frequency.setValueAtTime(880, ctx.currentTime);
-  osc1.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.25);
-
   osc2.frequency.setValueAtTime(1320, ctx.currentTime);
-  osc2.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.25);
 
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.05);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+  gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
 
   osc1.connect(gain);
   osc2.connect(gain);
@@ -112,9 +109,10 @@ function playUltimateSuccessSound() {
 
   osc1.start();
   osc2.start();
-  osc1.stop(ctx.currentTime + 0.6);
-  osc2.stop(ctx.currentTime + 0.6);
+  osc1.stop(ctx.currentTime + 0.8);
+  osc2.stop(ctx.currentTime + 0.8);
 }
+
 
 // =======================
 // 次へタップ音
@@ -151,8 +149,9 @@ function press(word) {
   input.push(word);
   if (input.length > correctCode.length) input.shift();
 
-  if (JSON.stringify(input) === JSON.stringify(correctCode)) {
-    playUltimateSuccessSound();
+  if (JSON.stringify(input) === JSON.stringify(code)) {
+  playSuccessSound();   // 🌟 特別な最高音
+
 
     video.currentTime = 0;
     video.classList.remove('hidden');
