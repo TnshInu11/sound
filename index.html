@@ -50,33 +50,26 @@ video {
 
 <body>
 
-<!-- 音声ボタン -->
 <div class="button-area">
   <button onclick="press('ドリル')">ドリル</button>
   <button onclick="press('コーポ')">コーポ</button>
   <button onclick="press('うんこぽ')">うんこぽ</button>
 </div>
 
-<!-- 次へ -->
 <button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
 
-<!-- 秘密の動画① -->
 <video id="video1" class="hidden" controls>
   <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
 </video>
 
 <script>
 // =======================
-// 共通：AudioContext（必ず1つ）
+// AudioContext 共通
 // =======================
 let audioCtx = null;
 function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
@@ -91,27 +84,36 @@ function speak(text) {
 }
 
 // =======================
-// 第1段階 成功音（明るい）
+// 最高音（第1・第2 共通）
 // =======================
-function playStage1SuccessSound() {
+function playUltimateSuccessSound() {
   const ctx = getAudioCtx();
 
-  const osc = ctx.createOscillator();
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(900, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
+  osc1.type = 'sine';
+  osc2.type = 'triangle';
+
+  osc1.frequency.setValueAtTime(880, ctx.currentTime);
+  osc1.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.25);
+
+  osc2.frequency.setValueAtTime(1320, ctx.currentTime);
+  osc2.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.25);
 
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+  gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
 
-  osc.connect(gain);
+  osc1.connect(gain);
+  osc2.connect(gain);
   gain.connect(ctx.destination);
 
-  osc.start();
-  osc.stop(ctx.currentTime + 0.25);
+  osc1.start();
+  osc2.start();
+  osc1.stop(ctx.currentTime + 0.6);
+  osc2.stop(ctx.currentTime + 0.6);
 }
 
 // =======================
@@ -119,7 +121,6 @@ function playStage1SuccessSound() {
 // =======================
 function playTapSound() {
   const ctx = getAudioCtx();
-
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
@@ -144,18 +145,14 @@ const video = document.getElementById('video1');
 const nextBtn = document.getElementById('nextBtn');
 
 function press(word) {
-  // 🔓 iOS対策：最初のタップで AudioContext を有効化
   getAudioCtx();
-
   speak(word);
 
   input.push(word);
-  if (input.length > correctCode.length) {
-    input.shift();
-  }
+  if (input.length > correctCode.length) input.shift();
 
   if (JSON.stringify(input) === JSON.stringify(correctCode)) {
-    playStage1SuccessSound();
+    playUltimateSuccessSound();
 
     video.currentTime = 0;
     video.classList.remove('hidden');
@@ -166,14 +163,9 @@ function press(word) {
   }
 }
 
-// =======================
-// 次へ
-// =======================
 function goNext() {
   playTapSound();
-  setTimeout(() => {
-    location.href = 'stage2.html';
-  }, 150);
+  setTimeout(() => location.href = 'stage2.html', 150);
 }
 </script>
 
