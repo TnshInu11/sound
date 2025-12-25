@@ -155,6 +155,22 @@ video.addEventListener('ended', () => {
   video.currentTime = 0; // 念のため先頭に戻す
 });
     
+video.addEventListener('ended', () => {
+  // 再生を止める
+  video.pause();
+  video.currentTime = 0;
+
+  // iPhone Safari 用：フルスクリーンを閉じる
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+  if (video.webkitExitFullscreen) {
+    video.webkitExitFullscreen();
+  }
+
+  // HTML上の動画を隠す
+  video.style.display = 'none';
+});
 
     
   </script>
