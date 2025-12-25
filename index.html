@@ -9,7 +9,7 @@
 body{
   margin:0; min-height:100vh; background:#0b0b0b; color:#fff;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:18px; font-family:system-ui, sans-serif;
+  gap:18px; font-family:system-ui, sans-serif; text-align:center;
 }
 .button-area{
   width:100%; display:flex; flex-direction:column; align-items:center; gap:18px;
@@ -21,6 +21,24 @@ button{
 .hidden{ display:none; }
 .video-wrap{ width:92%; max-width:520px; }
 video{ width:100%; border-radius:16px; }
+
+.hint{
+  width:90%; max-width:420px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 14px 16px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+.hint-title{ font-weight:700; margin-bottom:6px; opacity:0.95; }
+.hint-code{
+  font-weight:800;
+  font-size:22px;
+  letter-spacing: 0.18em;
+  margin-top: 6px;
+}
+.small{ opacity:0.9; font-size: 14px; margin-top: 6px; }
 </style>
 </head>
 
@@ -32,7 +50,12 @@ video{ width:100%; border-radius:16px; }
   <button onclick="press('うんこぽ')">うんこぽ</button>
 </div>
 
-<!-- 次へ（動画の上に出す） -->
+<div id="hint1" class="hint hidden">
+  <div class="hint-title">ヒント</div>
+  <div class="small">ドリル=1 / コーポ=2 / うんこぽ=3</div>
+  <div class="hint-code" id="hint1Code"></div>
+</div>
+
 <button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
 
 <div class="video-wrap">
@@ -42,9 +65,9 @@ video{ width:100%; border-radius:16px; }
 </div>
 
 <script>
-const VERSION = "20251226a"; // キャッシュ対策用（適当に変えてOK）
+const VERSION = "20251226d";
 
-// ---- AudioContext（1個だけ使う）----
+// ---- AudioContext ----
 let audioCtx;
 function getCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -52,7 +75,7 @@ function getCtx(){
   return audioCtx;
 }
 
-// ---- 音声読み上げ ----
+// ---- 読み上げ ----
 function speak(text){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -60,7 +83,7 @@ function speak(text){
   speechSynthesis.speak(u);
 }
 
-// ---- 最高音（以前の第2段階の音：安定版）----
+// ---- 成功音（最高音）----
 function playSuccessSound(){
   const ctx = getCtx();
   const o1 = ctx.createOscillator();
@@ -105,31 +128,39 @@ let input = [];
 const video = document.getElementById("video1");
 const nextBtn = document.getElementById("nextBtn");
 
+// ✅ 数字ヒント用：対応表
+const map1 = { 'ドリル': '1', 'コーポ': '2', 'うんこぽ': '3' };
+const hintCode1 = correctCode.map(x => map1[x]).join('');
+document.getElementById("hint1Code").textContent = hintCode1;
+
+// ✅ ヒント出現回数
+let pressCount = 0;
+const hintShowAt = 12;
+const hintElem = document.getElementById("hint1");
+
 function press(word){
-  getCtx();          // iPhone対策：最初のタップで音の許可を取る
+  getCtx();
   speak(word);
+
+  pressCount++;
+  if(pressCount >= hintShowAt) hintElem.classList.remove("hidden");
 
   input.push(word);
   if(input.length > correctCode.length) input.shift();
 
   if(JSON.stringify(input) === JSON.stringify(correctCode)){
-    // 音がエラーでも止まらないように
     try{ playSuccessSound(); }catch(e){}
-
     video.classList.remove("hidden");
     nextBtn.classList.remove("hidden");
     video.currentTime = 0;
     video.play();
-
     input = [];
   }
 }
 
 function goNext(){
   try{ playTapSound(); }catch(e){}
-  setTimeout(()=>{
-    location.href = "stage2.html?v=" + VERSION;
-  }, 180);
+  setTimeout(()=> location.href = "stage2.html?v=" + VERSION, 180);
 }
 </script>
 
