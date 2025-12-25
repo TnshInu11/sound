@@ -3,30 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secret 2</title>
+<title>Stage 2</title>
 
 <style>
 body {
   margin: 0;
   min-height: 100vh;
-  background: black;
+  background: #0b0b0b;
   color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 18px;
-}
-
-button {
-  width: 85%;
-  max-width: 420px;
-  height: 90px;
-  font-size: 28px;
-  border-radius: 22px;
-  border: none;
-  background: #222;
-  color: white;
+  font-family: system-ui, sans-serif;
 }
 
 .button-area {
@@ -37,43 +27,78 @@ button {
   gap: 18px;
 }
 
+button {
+  width: 85%;
+  max-width: 420px;
+  height: 90px;
+  font-size: 26px;
+  border-radius: 22px;
+  border: none;
+  background: #333;
+  color: white;
+}
+
 .hidden {
   display: none;
 }
 
-video {
+.video-wrap {
+  position: relative;
   width: 92%;
   max-width: 520px;
+}
+
+#nextBtn {
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 64px;
+  font-size: 22px;
+  border-radius: 18px;
+  background: #555;
+}
+
+video {
+  width: 100%;
+  border-radius: 16px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- 音声ボタン -->
 <div class="button-area">
   <button onclick="press('オーちゃん')">オーちゃん</button>
   <button onclick="press('コウモン')">コウモン</button>
   <button onclick="press('うんこーぷ')">うんこーぷ</button>
 </div>
 
-<video id="video2" class="hidden" controls>
-  <source src="v4qf8VXZdo8DEEZ6GrCbcRM2-BpZFTevYFME5_N-C7k.mp4" type="video/mp4">
-</video>
+<!-- 動画 + 次へ -->
+<div class="video-wrap hidden" id="videoArea">
+  <button id="nextBtn" onclick="goNext()">次へ</button>
+
+  <video id="video2" controls>
+    <source src="v4qf8VXZdo8DEEZ6GrCbcRM2-BpZFTevYFME5_N-C7k.mp4" type="video/mp4">
+  </video>
+</div>
 
 <script>
 // =======================
-let audioCtx = null;
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+// AudioContext
+// =======================
+let audioCtx;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
-// 音声
+// =======================
+// 音声読み上げ
+// =======================
 function speak(text) {
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -81,54 +106,94 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
-// ★最高音（index.html と同一）
-function playUltimateSuccessSound() {
-  const ctx = getAudioCtx();
+// =======================
+// 正解音（最高音）
+/* 第一段階と同じ音 */
+function playSuccessSound() {
+  const ctx = getCtx();
+  const o1 = ctx.createOscillator();
+  const o2 = ctx.createOscillator();
+  const gain = ctx.createGain();
 
+  o1.type = 'triangle';
+  o2.type = 'sine';
+  o1.frequency.value = 880;
+  o2.frequency.value = 1320;
+
+  gain.gain.setValueAtTime(0.001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAt(0.4, ctx.currentTime + 0.05);
+  gain.gain.exponentialRampToValueAt(0.001, ctx.currentTime + 0.8);
+
+  o1.connect(gain);
+  o2.connect(gain);
+  gain.connect(ctx.destination);
+
+  o1.start();
+  o2.start();
+  o1.stop(ctx.currentTime + 0.8);
+  o2.stop(ctx.currentTime + 0.8);
+}
+
+// =======================
+// 次へタップ音（効果音）
+function playTapSound() {
+  const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(1200, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(2400, ctx.currentTime + 0.35);
-
-  gain.gain.setValueAtTime(0.001, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.45, ctx.currentTime + 0.05);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+  osc.type = 'sine';
+  osc.frequency.value = 1000;
+  gain.gain.value = 0.15;
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
   osc.start();
-  osc.stop(ctx.currentTime + 0.7);
+  osc.stop(ctx.currentTime + 0.12);
 }
 
-// 暗号
+// =======================
+// 暗号ロジック
+// =======================
 const correctCode = [
-  'オーちゃん','コウモン','オーちゃん',
-  'うんこーぷ','うんこーぷ','コウモン'
+  'オーちゃん',
+  'うんこーぷ',
+  'オーちゃん',
+  'コウモン',
+  'うんこーぷ'
 ];
+
 let input = [];
 
 const video = document.getElementById('video2');
+const videoArea = document.getElementById('videoArea');
 
 function press(word) {
-  getAudioCtx();
+  getCtx();
   speak(word);
 
   input.push(word);
   if (input.length > correctCode.length) input.shift();
 
   if (JSON.stringify(input) === JSON.stringify(correctCode)) {
-    playUltimateSuccessSound();
+    playSuccessSound();
 
-    video.volume = 1.0;
     video.currentTime = 0;
-    video.classList.remove('hidden');
+    videoArea.classList.remove('hidden');
     video.play();
 
     input = [];
   }
+}
+
+// =======================
+// 次へ → 最終暗号
+// =======================
+function goNext() {
+  playTapSound();
+  setTimeout(() => {
+    location.href = 'final.html';
+  }, 180);
 }
 </script>
 
