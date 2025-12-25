@@ -9,7 +9,7 @@
 body{
   margin:0; min-height:100vh; background:#0b0b0b; color:#fff;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:18px; font-family:system-ui, sans-serif;
+  gap:18px; font-family:system-ui, sans-serif; text-align:center;
 }
 .button-area{
   width:100%; display:flex; flex-direction:column; align-items:center; gap:18px;
@@ -20,10 +20,26 @@ button{
 }
 .hidden{ display:none; }
 
-.video-wrap{
-  width:92%;
-  max-width:520px;
+.hint{
+  width:90%;
+  max-width:420px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 14px 16px;
+  line-height: 1.5;
 }
+.hint-title{
+  font-weight:800;
+  margin-bottom:8px;
+  opacity:0.95;
+}
+.hint-code{
+  font-weight:900;
+  font-size:28px;
+  letter-spacing: 0.22em;
+}
+
 #nextBtn{
   width:85%;
   max-width:420px;
@@ -32,6 +48,8 @@ button{
   border-radius:18px;
   background:#555;
 }
+
+.video-wrap{ width:92%; max-width:520px; }
 video{ width:100%; border-radius:16px; }
 </style>
 </head>
@@ -44,7 +62,12 @@ video{ width:100%; border-radius:16px; }
   <button onclick="press('うんこーぷ')">うんこーぷ</button>
 </div>
 
-<!-- ✅ クリア後に「次へ」と動画を表示（ボタンと動画の間に配置） -->
+<!-- ✅ 対応表は出さず、数字列のみ -->
+<div id="hint2" class="hint hidden">
+  <div class="hint-title">ヒント</div>
+  <div class="hint-code" id="hint2Code"></div>
+</div>
+
 <button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
 
 <div class="video-wrap hidden" id="videoArea">
@@ -54,7 +77,7 @@ video{ width:100%; border-radius:16px; }
 </div>
 
 <script>
-const VERSION = "20251226b";
+const VERSION = "20251226e";
 
 // ---- AudioContext ----
 let audioCtx;
@@ -64,7 +87,6 @@ function getCtx(){
   return audioCtx;
 }
 
-// ---- 読み上げ ----
 function speak(text){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -72,7 +94,6 @@ function speak(text){
   speechSynthesis.speak(u);
 }
 
-// ---- 最高音（安定版）----
 function playSuccessSound(){
   const ctx = getCtx();
   const o1 = ctx.createOscillator();
@@ -94,12 +115,10 @@ function playSuccessSound(){
   o2.stop(ctx.currentTime + 0.8);
 }
 
-// ---- 次へタップ音 ----
 function playTapSound(){
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-
   osc.type = "sine";
   osc.frequency.value = 1000;
 
@@ -125,34 +144,40 @@ const video = document.getElementById("video2");
 const videoArea = document.getElementById("videoArea");
 const nextBtn = document.getElementById("nextBtn");
 
+// ✅ 数字列ヒント（内部対応表。画面には出さない）
+const map2 = { 'オーちゃん': '1', 'コウモン': '2', 'うんこーぷ': '3' };
+document.getElementById("hint2Code").textContent =
+  correctCode.map(x => map2[x]).join('');
+
+// ✅ ヒント出現回数
+let pressCount = 0;
+const hintShowAt = 14;
+const hintElem = document.getElementById("hint2");
+
 function press(word){
   getCtx();
   speak(word);
+
+  pressCount++;
+  if(pressCount >= hintShowAt) hintElem.classList.remove("hidden");
 
   input.push(word);
   if(input.length > correctCode.length) input.shift();
 
   if(JSON.stringify(input) === JSON.stringify(correctCode)){
     try{ playSuccessSound(); }catch(e){}
-
-    // ✅ 次へを「音声ボタンと動画の間」に出す
     nextBtn.classList.remove("hidden");
-
-    // ✅ 動画表示
     videoArea.classList.remove("hidden");
     video.volume = 1.0;
     video.currentTime = 0;
     video.play();
-
     input = [];
   }
 }
 
 function goNext(){
   try{ playTapSound(); }catch(e){}
-  setTimeout(()=>{
-    location.href = "final.html?v=" + VERSION;
-  }, 180);
+  setTimeout(()=> location.href = "final.html?v=" + VERSION, 180);
 }
 </script>
 
