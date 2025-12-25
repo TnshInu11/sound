@@ -1,156 +1,154 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>秘密の暗号ボックス</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二段階秘密暗号</title>
 
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      background: #0b0b0b;
-      color: white;
-    }
+<style>
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0b0b0b;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
-    button {
-      width: 80%;
-      max-width: 420px;
-      height: 100px;
-      font-size: 32px;
-      border-radius: 22px;
-      border: none;
-      background: #333;
-      color: white;
-    }
+button {
+  width: 85%;
+  max-width: 420px;
+  height: 90px;
+  font-size: 28px;
+  border-radius: 22px;
+  border: none;
+  background: #333;
+  color: white;
+}
 
-    button:active {
-      background: #666;
-    }
+.hidden {
+  display: none;
+}
 
-    video {
-      width: 90%;
-      max-width: 500px;
-      display: none;
-      margin-top: 20px;
-    }
-
-    .shake {
-      animation: shake 0.4s;
-    }
-
-    @keyframes shake {
-      0% { transform: translate(0); }
-      25% { transform: translate(-6px, 4px); }
-      50% { transform: translate(6px, -4px); }
-      75% { transform: translate(-6px, -4px); }
-      100% { transform: translate(0); }
-    }
-  </style>
+video {
+  width: 92%;
+  max-width: 520px;
+}
+</style>
 </head>
+
 <body>
 
-  <button onclick="press('ドリル')">ドリル</button>
-  <button onclick="press('コーポ')">コーポ</button>
-  <button onclick="press('うんこぽ')">うんこぽ</button>
+<!-- ===== 第1段階 ===== -->
+<div id="stage1">
+  <button onclick="press1('ドリル')">ドリル</button>
+  <button onclick="press1('コーポ')">コーポ</button>
+  <button onclick="press1('うんこぽ')">うんこぽ</button>
+</div>
 
-  <video id="secretVideo" controls>
-    <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
-  </video>
+<!-- ===== 第2段階（最初は非表示） ===== -->
+<div id="stage2" class="hidden">
+  <button onclick="press2('オーちゃん')">オーちゃん</button>
+  <button onclick="press2('コウモン')">コウモン</button>
+  <button onclick="press2('うんこーぷ')">うんこーぷ</button>
+</div>
 
-  <script>
-    // 🔐 正解の暗号（同じ言葉を何回使ってもOK）
-    const secretCode = [
-      'ドリル',
-      'ドリル',
-      'コーポ',
-      'うんこぽ',
-      'コーポ'
-    ];
+<!-- ===== 秘密の動画① ===== -->
+<video id="video1" controls class="hidden">
+  <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
+</video>
 
-    let input = [];
+<!-- ===== 秘密の動画② ===== -->
+<video id="video2" controls class="hidden">
+  <source src="v4qf8VXZdo8DEEZ6GrCbcRM2-BpZFTevYFME5_N-C7k.mp4" type="video/mp4">
+</video>
 
-    function speak(text) {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ja-JP';
-      speechSynthesis.cancel();
-      speechSynthesis.speak(u);
-    }
+<script>
+// ===== 音声読み上げ =====
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP';
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
 
-    function press(word) {
-      speak(word);
+// =======================
+// 第1段階
+// =======================
+const code1 = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
+let input1 = [];
+let playCount1 = 0;
 
-      input.push(word);
-      if (input.length > secretCode.length) {
-        input.shift();
-      }
+const video1 = document.getElementById('video1');
+const stage2 = document.getElementById('stage2');
 
-      if (JSON.stringify(input) === JSON.stringify(secretCode)) {
-        unlock();
-      }
-    }
+function press1(word) {
+  speak(word);
 
-    function unlock() {
-      // 📳 振動（iPhone / Android）
-      if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100, 50, 200]);
-      }
+  input1.push(word);
+  if (input1.length > code1.length) {
+    input1.shift();
+  }
 
-      // 🫨 画面を揺らす
-      document.body.classList.add('shake');
-      setTimeout(() => {
-        document.body.classList.remove('shake');
-      }, 400);
+  if (JSON.stringify(input1) === JSON.stringify(code1)) {
+    video1.classList.remove('hidden');
+    video1.pause();
+    video1.currentTime = 0;
+    video1.play();
+  }
+}
 
-      // ✨ キラキラ音
-      playSparkle();
+video1.addEventListener('ended', () => {
+  playCount1++;
+  input1 = [];
 
-      // 🎬 動画表示
-      const video = document.getElementById('secretVideo');
-      video.style.display = 'block';
+  if (playCount1 >= 3) {
+    stage2.classList.remove('hidden');
+  }
+});
 
-video.pause();
-video.currentTime = 0;
-video.play();
-    }
+// =======================
+// 第2段階（複雑な暗号）
+// =======================
+/*
+暗号順：
+オーちゃん
+コウモン
+コウモン
+うんこーぷ
+オーちゃん
+*/
+const code2 = [
+  'オーちゃん',
+  'コウモン',
+  'コウモン',
+  'うんこーぷ',
+  'オーちゃん'
+];
 
-    // ✨ 正解音（Web Audioで生成）
-    function playSparkle() {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+let input2 = [];
+const video2 = document.getElementById('video2');
 
-      const freqs = [880, 1320, 1760];
-      freqs.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+function press2(word) {
+  speak(word);
 
-        osc.frequency.value = freq;
-        osc.type = 'sine';
+  input2.push(word);
+  if (input2.length > code2.length) {
+    input2.shift();
+  }
 
-        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(
-          0.3,
-          ctx.currentTime + 0.02 + i * 0.05
-        );
-        gain.gain.exponentialRampToValueAtTime(
-          0.0001,
-          ctx.currentTime + 0.3 + i * 0.1
-        );
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.6);
-      });
-    }
-
-    
-  </script>
+  if (JSON.stringify(input2) === JSON.stringify(code2)) {
+    video2.classList.remove('hidden');
+    video2.pause();
+    video2.currentTime = 0;
+    video2.play();
+  }
+}
+</script>
 
 </body>
 </html>
