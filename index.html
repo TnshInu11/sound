@@ -6,45 +6,21 @@
 <title>Secret</title>
 
 <style>
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: #0b0b0b;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+body{
+  margin:0; min-height:100vh; background:#0b0b0b; color:#fff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:18px; font-family:system-ui, sans-serif;
 }
-
-button {
-  width: 85%;
-  max-width: 420px;
-  height: 90px;
-  font-size: 28px;
-  border-radius: 22px;
-  border: none;
-  background: #333;
-  color: white;
+.button-area{
+  width:100%; display:flex; flex-direction:column; align-items:center; gap:18px;
 }
-
-.button-area {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
+button{
+  width:85%; max-width:420px; height:90px; font-size:28px;
+  border-radius:22px; border:none; background:#333; color:#fff;
 }
-
-.hidden {
-  display: none;
-}
-
-video {
-  width: 92%;
-  max-width: 520px;
-}
+.hidden{ display:none; }
+.video-wrap{ width:92%; max-width:520px; }
+video{ width:100%; border-radius:16px; }
 </style>
 </head>
 
@@ -56,113 +32,104 @@ video {
   <button onclick="press('うんこぽ')">うんこぽ</button>
 </div>
 
+<!-- 次へ（動画の上に出す） -->
 <button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
 
-<video id="video1" class="hidden" controls>
-  <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
-</video>
+<div class="video-wrap">
+  <video id="video1" class="hidden" controls>
+    <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
+  </video>
+</div>
 
 <script>
-// =======================
-// AudioContext（共通）
-// =======================
-let audioCtx = null;
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+const VERSION = "20251226a"; // キャッシュ対策用（適当に変えてOK）
+
+// ---- AudioContext（1個だけ使う）----
+let audioCtx;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === "suspended") audioCtx.resume();
   return audioCtx;
 }
 
-// =======================
-// 音声読み上げ
-// =======================
-function speak(text) {
+// ---- 音声読み上げ ----
+function speak(text){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ja-JP';
+  u.lang = "ja-JP";
   speechSynthesis.speak(u);
 }
 
-// =======================
-// ★最高音（確定版）
-// =======================
-function playUltimateSuccessSound() {
-  const ctx = getAudioCtx();
-
-  const osc = ctx.createOscillator();
+// ---- 最高音（以前の第2段階の音：安定版）----
+function playSuccessSound(){
+  const ctx = getCtx();
+  const o1 = ctx.createOscillator();
+  const o2 = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(1200, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(2400, ctx.currentTime + 0.35);
+  o1.type = "triangle";
+  o2.type = "sine";
+  o1.frequency.value = 880;
+  o2.frequency.value = 1320;
 
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.45, ctx.currentTime + 0.05);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+  gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
 
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start();
-  osc.stop(ctx.currentTime + 0.7);
+  o1.connect(gain); o2.connect(gain); gain.connect(ctx.destination);
+  o1.start(); o2.start();
+  o1.stop(ctx.currentTime + 0.8);
+  o2.stop(ctx.currentTime + 0.8);
 }
 
-// =======================
-// 次へタップ音
-// =======================
-function playTapSound() {
-  const ctx = getAudioCtx();
+// ---- 次へタップ音 ----
+function playTapSound(){
+  const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = 1000;
 
-  osc.type = 'sine';
-  osc.frequency.value = 880;
-  gain.gain.value = 0.12;
+  gain.gain.setValueAtTime(0.001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
 
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start();
-  osc.stop(ctx.currentTime + 0.12);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + 0.12);
 }
 
-// =======================
-// 暗号ロジック
-// =======================
+// ---- 暗号 ----
 const correctCode = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
 let input = [];
 
-const video = document.getElementById('video1');
-const nextBtn = document.getElementById('nextBtn');
+const video = document.getElementById("video1");
+const nextBtn = document.getElementById("nextBtn");
 
-function press(word) {
-  getAudioCtx();
+function press(word){
+  getCtx();          // iPhone対策：最初のタップで音の許可を取る
   speak(word);
 
   input.push(word);
-  if (input.length > correctCode.length) input.shift();
+  if(input.length > correctCode.length) input.shift();
 
-  if (JSON.stringify(input) === JSON.stringify(correctCode)) {
-    playUltimateSuccessSound();
+  if(JSON.stringify(input) === JSON.stringify(correctCode)){
+    // 音がエラーでも止まらないように
+    try{ playSuccessSound(); }catch(e){}
 
+    video.classList.remove("hidden");
+    nextBtn.classList.remove("hidden");
     video.currentTime = 0;
-    video.classList.remove('hidden');
-    nextBtn.classList.remove('hidden');
     video.play();
 
     input = [];
   }
 }
 
-function goNext() {
-  playTapSound();
-  setTimeout(() => {
-    location.href = 'stage2.html';
-  }, 150);
+function goNext(){
+  try{ playTapSound(); }catch(e){}
+  setTimeout(()=>{
+    location.href = "stage2.html?v=" + VERSION;
+  }, 180);
 }
 </script>
 
