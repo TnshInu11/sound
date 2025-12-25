@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secret</title>
+<title>Secret 2</title>
 
 <style>
 body {
   margin: 0;
   min-height: 100vh;
-  background: #000;
+  background: black;
   color: white;
   display: flex;
   flex-direction: column;
@@ -25,8 +25,16 @@ button {
   font-size: 28px;
   border-radius: 22px;
   border: none;
-  background: #444;
+  background: #222;
   color: white;
+}
+
+.button-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
 }
 
 .hidden {
@@ -37,92 +45,58 @@ video {
   width: 92%;
   max-width: 520px;
 }
-
-.button-area {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-}
-  
 </style>
-
-
 </head>
 
 <body>
 
-<!-- 音声ボタン -->
 <div class="button-area">
   <button onclick="press('オーちゃん')">オーちゃん</button>
   <button onclick="press('コウモン')">コウモン</button>
   <button onclick="press('うんこーぷ')">うんこーぷ</button>
 </div>
 
-<!-- 秘密の動画② -->
-<video id="video2" controls class="hidden">
+<video id="video2" class="hidden" controls>
   <source src="v4qf8VXZdo8DEEZ6GrCbcRM2-BpZFTevYFME5_N-C7k.mp4" type="video/mp4">
 </video>
 
 <script>
 // =======================
-// 音声読み上げ（ボタン）
-// =======================
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// 音声
 function speak(text) {
+  speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'ja-JP';
-  speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
-// =======================
-// 第2段階の暗号（複雑）
-// =======================
-const code = [
-  'オーちゃん',
-  'コウモン',
-  'コウモン',
-  'うんこーぷ',
-  'オーちゃん'
-];
-
-let input = [];
-
-// =======================
-// 動画 & 音量ブースト
-// =======================
-const video = document.getElementById('video2');
-
-// Web Audio で音量を増幅
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-const source = audioCtx.createMediaElementSource(video);
-const gainNode = audioCtx.createGain();
-
-gainNode.gain.value = 2.3; // 🔊 音量倍率（2.0〜2.5 推奨）
-
-source.connect(gainNode);
-gainNode.connect(audioCtx.destination);
-
-// =======================
-// 成功時の特別な最高音
-// =======================
-function playSuccessSound() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+// 最高音（第1と同じ）
+function playUltimateSuccessSound() {
+  const ctx = getAudioCtx();
 
   const osc1 = ctx.createOscillator();
   const osc2 = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc1.type = 'triangle';
-  osc2.type = 'sine';
+  osc1.type = 'sine';
+  osc2.type = 'triangle';
 
   osc1.frequency.setValueAtTime(880, ctx.currentTime);
+  osc1.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.25);
+
   osc2.frequency.setValueAtTime(1320, ctx.currentTime);
+  osc2.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.25);
 
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.45, ctx.currentTime + 0.05);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
 
   osc1.connect(gain);
   osc2.connect(gain);
@@ -130,27 +104,32 @@ function playSuccessSound() {
 
   osc1.start();
   osc2.start();
-  osc1.stop(ctx.currentTime + 0.9);
-  osc2.stop(ctx.currentTime + 0.9);
+  osc1.stop(ctx.currentTime + 0.7);
+  osc2.stop(ctx.currentTime + 0.7);
 }
 
-// =======================
-// ボタン処理
-// =======================
+// 暗号
+const correctCode = [
+  'オーちゃん','コウモン','オーちゃん',
+  'うんこーぷ','うんこーぷ','コウモン'
+];
+let input = [];
+
+const video = document.getElementById('video2');
+
 function press(word) {
+  getAudioCtx();
   speak(word);
 
   input.push(word);
-  if (input.length > code.length) input.shift();
+  if (input.length > correctCode.length) input.shift();
 
-  if (JSON.stringify(input) === JSON.stringify(code)) {
-    playSuccessSound();     // 🌟 特別音
+  if (JSON.stringify(input) === JSON.stringify(correctCode)) {
+    playUltimateSuccessSound();
 
-    video.classList.remove('hidden');
-    video.pause();
+    video.volume = 1.0; // ★ 音量最大
     video.currentTime = 0;
-
-    audioCtx.resume();     // iPhone対策
+    video.classList.remove('hidden');
     video.play();
 
     input = [];
