@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>第二段階</title>
+<title>Secret</title>
 
 <style>
 body {
@@ -42,19 +42,20 @@ video {
 
 <body>
 
-<h2>第二段階</h2>
-
-<div id="stage2">
+<!-- 音声ボタン -->
+<div>
   <button onclick="press('オーちゃん')">オーちゃん</button>
   <button onclick="press('コウモン')">コウモン</button>
   <button onclick="press('うんこーぷ')">うんこーぷ</button>
 </div>
 
+<!-- 秘密の動画② -->
 <video id="video2" controls class="hidden">
   <source src="v4qf8VXZdo8DEEZ6GrCbcRM2-BpZFTevYFME5_N-C7k.mp4" type="video/mp4">
 </video>
 
 <script>
+// 音声読み上げ
 function speak(text) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'ja-JP';
@@ -62,7 +63,7 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
-// 🔐 第2段階の暗号（複雑）
+// 第2段階暗号（複雑）
 const code = [
   'オーちゃん',
   'コウモン',
@@ -74,7 +75,7 @@ const code = [
 let input = [];
 const video = document.getElementById('video2');
 
-// 🔊 音量を最大に
+// 音量最大
 video.volume = 1.0;
 
 function press(word) {
