@@ -29,6 +29,14 @@ button {
   color: white;
 }
 
+.button-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
 .hidden {
   display: none;
 }
@@ -36,14 +44,6 @@ button {
 video {
   width: 92%;
   max-width: 520px;
-}
-
-.button-area {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
 }
 </style>
 </head>
@@ -57,54 +57,69 @@ video {
   <button onclick="press('うんこぽ')">うんこぽ</button>
 </div>
 
-<!-- 次へ（動画の上） -->
+<!-- 次へ -->
 <button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
 
 <!-- 秘密の動画① -->
-<video id="video1" controls class="hidden">
+<video id="video1" class="hidden" controls>
   <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
 </video>
 
 <script>
 // =======================
-// 音声読み上げ（ボタン）
+// 共通：AudioContext（必ず1つ）
+// =======================
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+// =======================
+// 音声読み上げ
 // =======================
 function speak(text) {
+  speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'ja-JP';
-  speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
 // =======================
-// 第1段階 正解エフェクト音
+// 第1段階 成功音（明るい）
 // =======================
-  function playStage1SuccessSound() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+function playStage1SuccessSound() {
+  const ctx = getAudioCtx();
 
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'sine'; // 明るい音
+  osc.type = 'sine';
   osc.frequency.setValueAtTime(900, ctx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
 
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
   osc.start();
-  osc.st
-
+  osc.stop(ctx.currentTime + 0.25);
+}
 
 // =======================
-// 次へボタンのタップ音
+// 次へタップ音
 // =======================
 function playTapSound() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = getAudioCtx();
+
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
@@ -122,34 +137,40 @@ function playTapSound() {
 // =======================
 // 暗号ロジック
 // =======================
-const code = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
+const correctCode = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
 let input = [];
 
 const video = document.getElementById('video1');
 const nextBtn = document.getElementById('nextBtn');
 
 function press(word) {
+  // 🔓 iOS対策：最初のタップで AudioContext を有効化
+  getAudioCtx();
+
   speak(word);
 
   input.push(word);
-  if (input.length > code.length) input.shift();
+  if (input.length > correctCode.length) {
+    input.shift();
+  }
 
-  if (JSON.stringify(input) === JSON.stringify(code)) {
-    playStage1SuccessSound();   // 🔔 正解音
+  if (JSON.stringify(input) === JSON.stringify(correctCode)) {
+    playStage1SuccessSound();
 
+    video.currentTime = 0;
     video.classList.remove('hidden');
     nextBtn.classList.remove('hidden');
-
-    video.pause();
-    video.currentTime = 0;
     video.play();
 
     input = [];
   }
 }
 
+// =======================
+// 次へ
+// =======================
 function goNext() {
-  playTapSound();              // 🔔 タップ音
+  playTapSound();
   setTimeout(() => {
     location.href = 'stage2.html';
   }, 150);
