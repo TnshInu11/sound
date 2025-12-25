@@ -113,7 +113,10 @@
       // 🎬 動画表示
       const video = document.getElementById('secretVideo');
       video.style.display = 'block';
-      video.play();
+
+video.pause();
+video.currentTime = 0;
+video.play();
     }
 
     // ✨ 正解音（Web Audioで生成）
