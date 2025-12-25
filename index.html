@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>第一段階</title>
+<title>Secret</title>
 
 <style>
 body {
@@ -42,21 +42,23 @@ video {
 
 <body>
 
-<h2>第一段階</h2>
-
-<div id="stage1">
+<!-- 音声ボタン -->
+<div>
   <button onclick="press('ドリル')">ドリル</button>
   <button onclick="press('コーポ')">コーポ</button>
   <button onclick="press('うんこぽ')">うんこぽ</button>
 </div>
 
+<!-- 次へ（動画の上に表示） -->
+<button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
+
+<!-- 秘密の動画① -->
 <video id="video1" controls class="hidden">
   <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
 </video>
 
-<button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
-
 <script>
+// 音声読み上げ
 function speak(text) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'ja-JP';
@@ -64,6 +66,16 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
+// 「次へ」効果音（システム音）
+function playNextSound() {
+  const u = new SpeechSynthesisUtterance('次へ');
+  u.lang = 'ja-JP';
+  u.rate = 1.2;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// 暗号
 const code = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
 let input = [];
 
@@ -78,16 +90,19 @@ function press(word) {
 
   if (JSON.stringify(input) === JSON.stringify(code)) {
     video.classList.remove('hidden');
+    nextBtn.classList.remove('hidden');
     video.pause();
     video.currentTime = 0;
     video.play();
-    nextBtn.classList.remove('hidden');
     input = [];
   }
 }
 
 function goNext() {
-  location.href = 'stage2.html';
+  playNextSound();
+  setTimeout(() => {
+    location.href = 'stage2.html';
+  }, 300);
 }
 </script>
 
