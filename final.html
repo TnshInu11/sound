@@ -7,14 +7,19 @@
 
 <style>
 body{
-  margin:0; min-height:100vh; background:#0b0b0b; color:#fff;
+  margin:0; min-height:100vh;
+  background:#f3f4f6; color:#111;
   font-family:system-ui, sans-serif;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:24px;
 }
 .box{
-  width:90%; max-width:420px; background:#1a1a1a;
-  border-radius:20px; padding:20px; text-align:center;
+  width:90%; max-width:420px;
+  background:#ffffff;
+  border-radius:20px;
+  padding:20px;
+  text-align:center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 .emoji-tabs{
   display:flex; flex-wrap:wrap; justify-content:center;
@@ -22,12 +27,17 @@ body{
 }
 .emoji-btn{
   font-size:32px; width:64px; height:64px;
-  border-radius:16px; border:none; background:#333; color:#fff;
+  border-radius:16px; border:1px solid #ddd;
+  background:#f8f8f8; color:#111;
 }
-.emoji-btn.selected{ background:#666; }
+.emoji-btn.selected{
+  background:#e5e7eb;
+  border-color:#999;
+}
 button.main{
   width:90%; max-width:420px; height:72px; font-size:24px;
-  border-radius:20px; border:none; background:#444; color:#fff;
+  border-radius:20px; border:none;
+  background:#111827; color:#fff;
 }
 .hidden{ display:none; }
 video{ width:92%; max-width:520px; margin-top:18px; border-radius:16px; }
@@ -90,7 +100,6 @@ function playMissSound(){
 }
 
 function playSuccessSound(){
-  // stage2 と同じ「最高音」
   const ctx = getCtx();
   const o1 = ctx.createOscillator();
   const o2 = ctx.createOscillator();
@@ -115,23 +124,31 @@ function playSuccessSound(){
 const correct1 = "🧳";
 const correct2 = "🍢";
 
-// ダミー候補（この中からランダムに4つずつ）
-const dummyPool = ["🍎","🎈","🐸","🚲","🪐","📦","🦷","🍋","🎮","🧤"];
+// ダミー候補（十分多めにして、被り回避）
+const dummyPool = ["🍎","🎈","🐸","🚲","🪐","📦","🦷","🍋","🎮","🧤","🧸","🧯","🪑","🪙","🧪","🧩"];
 
 let select1 = null;
 let select2 = null;
 
-function fillBox(elemId, correct, setter){
+function shuffle(arr){
+  return arr.slice().sort(()=>Math.random()-0.5);
+}
+
+// ✅ box1 と box2 で「ダミーが被らない」ように確保
+function makeDistinctDummies(nEach){
+  const pool = dummyPool.filter(e => e !== correct1 && e !== correct2);
+  const picked = shuffle(pool).slice(0, nEach*2); // 例：4*2=8個
+  return {
+    d1: picked.slice(0, nEach),
+    d2: picked.slice(nEach, nEach*2)
+  };
+}
+
+const { d1, d2 } = makeDistinctDummies(4);
+
+function fillBox(elemId, correct, dummies, setter){
   const box = document.getElementById(elemId);
-  const list = [correct];
-
-  while(list.length < 5){
-    const e = dummyPool[Math.floor(Math.random()*dummyPool.length)];
-    if(!list.includes(e)) list.push(e);
-  }
-
-  // シャッフル
-  list.sort(()=>Math.random()-0.5);
+  const list = shuffle([correct, ...dummies]); // 正解 + ダミー
 
   list.forEach(emoji=>{
     const btn = document.createElement("button");
@@ -147,8 +164,8 @@ function fillBox(elemId, correct, setter){
   });
 }
 
-fillBox("box1", correct1, e=>select1=e);
-fillBox("box2", correct2, e=>select2=e);
+fillBox("box1", correct1, d1, e=>select1=e);
+fillBox("box2", correct2, d2, e=>select2=e);
 
 function checkAnswer(){
   getCtx();
