@@ -21,14 +21,16 @@ button{
 .hidden{ display:none; }
 
 .video-wrap{
-  position:relative;
-  width:92%; max-width:520px;
+  width:92%;
+  max-width:520px;
 }
 #nextBtn{
-  position:absolute;
-  top:-70px; left:50%; transform:translateX(-50%);
-  width:70%; height:64px; font-size:22px;
-  border-radius:18px; background:#555;
+  width:85%;
+  max-width:420px;
+  height:64px;
+  font-size:22px;
+  border-radius:18px;
+  background:#555;
 }
 video{ width:100%; border-radius:16px; }
 </style>
@@ -42,15 +44,17 @@ video{ width:100%; border-radius:16px; }
   <button onclick="press('うんこーぷ')">うんこーぷ</button>
 </div>
 
+<!-- ✅ クリア後に「次へ」と動画を表示（ボタンと動画の間に配置） -->
+<button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
+
 <div class="video-wrap hidden" id="videoArea">
-  <button id="nextBtn" onclick="goNext()">次へ</button>
   <video id="video2" controls>
     <source src="v4qf8VXZdo8DEEZ6GrCbcRM2-BpZFTevYFME5_N-C7k.mp4" type="video/mp4">
   </video>
 </div>
 
 <script>
-const VERSION = "20251226a";
+const VERSION = "20251226b";
 
 // ---- AudioContext ----
 let audioCtx;
@@ -68,7 +72,7 @@ function speak(text){
   speechSynthesis.speak(u);
 }
 
-// ---- 最高音（index と同じ）----
+// ---- 最高音（安定版）----
 function playSuccessSound(){
   const ctx = getCtx();
   const o1 = ctx.createOscillator();
@@ -107,7 +111,7 @@ function playTapSound(){
   osc.start(); osc.stop(ctx.currentTime + 0.12);
 }
 
-// ---- 暗号（あなたが貼ってくれたものと同じ）----
+// ---- 暗号 ----
 const correctCode = [
   'オーちゃん',
   'うんこーぷ',
@@ -119,6 +123,7 @@ const correctCode = [
 let input = [];
 const video = document.getElementById("video2");
 const videoArea = document.getElementById("videoArea");
+const nextBtn = document.getElementById("nextBtn");
 
 function press(word){
   getCtx();
@@ -130,6 +135,10 @@ function press(word){
   if(JSON.stringify(input) === JSON.stringify(correctCode)){
     try{ playSuccessSound(); }catch(e){}
 
+    // ✅ 次へを「音声ボタンと動画の間」に出す
+    nextBtn.classList.remove("hidden");
+
+    // ✅ 動画表示
     videoArea.classList.remove("hidden");
     video.volume = 1.0;
     video.currentTime = 0;
