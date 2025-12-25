@@ -79,25 +79,26 @@ function speak(text) {
 // =======================
 // 第1段階 正解エフェクト音
 // =======================
-function playStage1SuccessSound() {
+  function playStage1SuccessSound() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
 
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(740, ctx.currentTime);
+  osc.type = 'sine'; // 明るい音
+  osc.frequency.setValueAtTime(900, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
 
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.05);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+  gain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
   osc.start();
-  osc.stop(ctx.currentTime + 0.4);
-}
+  osc.st
+
 
 // =======================
 // 次へボタンのタップ音
