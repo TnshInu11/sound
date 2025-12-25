@@ -37,7 +37,7 @@ video {
   width: 92%;
   max-width: 520px;
 }
-  
+
 .button-area {
   width: 100%;
   display: flex;
@@ -45,7 +45,6 @@ video {
   align-items: center;
   gap: 18px;
 }
-
 </style>
 </head>
 
@@ -58,7 +57,7 @@ video {
   <button onclick="press('うんこぽ')">うんこぽ</button>
 </div>
 
-<!-- 次へ（動画の上に表示） -->
+<!-- 次へ（動画の上） -->
 <button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
 
 <!-- 秘密の動画① -->
@@ -67,7 +66,9 @@ video {
 </video>
 
 <script>
-// 音声読み上げ
+// =======================
+// 音声読み上げ（ボタン）
+// =======================
 function speak(text) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'ja-JP';
@@ -75,25 +76,51 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
-function playTapSound() {
+// =======================
+// 第1段階 正解エフェクト音
+// =======================
+function playStage1SuccessSound() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'sine';        // やさしい音
-  osc.frequency.value = 880; // ピコン感のある高さ
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(740, ctx.currentTime);
 
-  gain.gain.value = 0.15;   // 音量（大きすぎない）
+  gain.gain.setValueAtTime(0.001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
   osc.start();
-  osc.stop(ctx.currentTime + 0.12); // 一瞬で鳴らす
+  osc.stop(ctx.currentTime + 0.4);
 }
 
+// =======================
+// 次へボタンのタップ音
+// =======================
+function playTapSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
 
-// 暗号
+  osc.type = 'sine';
+  osc.frequency.value = 880;
+  gain.gain.value = 0.12;
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  osc.stop(ctx.currentTime + 0.12);
+}
+
+// =======================
+// 暗号ロジック
+// =======================
 const code = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
 let input = [];
 
@@ -107,22 +134,25 @@ function press(word) {
   if (input.length > code.length) input.shift();
 
   if (JSON.stringify(input) === JSON.stringify(code)) {
+    playStage1SuccessSound();   // 🔔 正解音
+
     video.classList.remove('hidden');
     nextBtn.classList.remove('hidden');
+
     video.pause();
     video.currentTime = 0;
     video.play();
+
     input = [];
   }
 }
 
 function goNext() {
-  playTapSound();   // 🔔 エフェクト音
+  playTapSound();              // 🔔 タップ音
   setTimeout(() => {
     location.href = 'stage2.html';
   }, 150);
 }
-
 </script>
 
 </body>
