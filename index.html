@@ -148,6 +148,15 @@ video.play();
         osc.stop(ctx.currentTime + 0.6);
       });
     }
+    const video = document.getElementById('secretVideo');
+
+video.addEventListener('ended', () => {
+  video.style.display = 'none';
+  video.currentTime = 0; // 念のため先頭に戻す
+});
+    
+
+    
   </script>
 
 </body>
