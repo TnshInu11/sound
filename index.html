@@ -66,14 +66,23 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
-// 「次へ」効果音（システム音）
-function playNextSound() {
-  const u = new SpeechSynthesisUtterance('次へ');
-  u.lang = 'ja-JP';
-  u.rate = 1.2;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+function playTapSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';        // やさしい音
+  osc.frequency.value = 880; // ピコン感のある高さ
+
+  gain.gain.value = 0.15;   // 音量（大きすぎない）
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  osc.stop(ctx.currentTime + 0.12); // 一瞬で鳴らす
 }
+
 
 // 暗号
 const code = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
@@ -99,11 +108,12 @@ function press(word) {
 }
 
 function goNext() {
-  playNextSound();
+  playTapSound();   // 🔔 エフェクト音
   setTimeout(() => {
     location.href = 'stage2.html';
-  }, 300);
+  }, 150);
 }
+
 </script>
 
 </body>
