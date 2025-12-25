@@ -6,77 +6,158 @@
 <title>Final</title>
 
 <style>
+/* ===== 全体 ===== */
 body{
-  margin:0; min-height:100vh;
-  background:#f3f4f6; color:#111;
+  margin:0;
+  min-height:100vh;
+  background:#f3f4f6;
+  color:#111;
   font-family:system-ui, sans-serif;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  gap:24px;
+  text-align:center;              /* ✅ 文字も中央 */
+}
+
+/* ✅ 最終ページの中央揃えを強制するコンテナ */
+.container{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
   gap:24px;
 }
+
+/* ===== カード ===== */
 .box{
-  width:90%; max-width:420px;
-  background:#ffffff;
+  width:90%;
+  max-width:420px;
+  background:#fff;
   border-radius:20px;
   padding:20px;
-  text-align:center;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  text-align:center;
 }
+
+/* ===== 絵文字タブ ===== */
 .emoji-tabs{
-  display:flex; flex-wrap:wrap; justify-content:center;
-  gap:14px; margin-top:12px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;         /* ✅ 絵文字は中央 */
+  gap:14px;
+  margin-top:12px;
 }
+
 .emoji-btn{
-  font-size:32px; width:64px; height:64px;
-  border-radius:16px; border:1px solid #ddd;
-  background:#f8f8f8; color:#111;
+  font-size:32px;
+  width:64px;
+  height:64px;
+  border-radius:16px;
+  border:1px solid #ddd;
+  background:#f8f8f8;
+  color:#111;
 }
+
 .emoji-btn.selected{
   background:#e5e7eb;
   border-color:#999;
 }
+
+/* ===== メインボタン ===== */
 button.main{
-  width:90%; max-width:420px; height:72px; font-size:24px;
-  border-radius:20px; border:none;
-  background:#111827; color:#fff;
+  width:90%;
+  max-width:420px;
+  height:72px;
+  font-size:24px;
+  border-radius:20px;
+  border:none;
+  background:#111827;
+  color:#fff;
 }
+
+/* ===== 表示切替 ===== */
 .hidden{ display:none; }
-video{ width:92%; max-width:520px; margin-top:18px; border-radius:16px; }
+
+video{
+  width:92%;
+  max-width:520px;
+  margin-top:18px;
+  border-radius:16px;
+}
+
+/* ===== 紙吹雪（簡易） ===== */
+.confetti-layer{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:9999;
+}
+
+.confetti{
+  position:absolute;
+  top:-12px;
+  width:10px;
+  height:14px;
+  opacity:0.95;
+  border-radius:2px;
+  animation: fall linear forwards;
+}
+
+@keyframes fall{
+  to{
+    transform: translate(var(--dx), 110vh) rotate(var(--rot));
+  }
+}
 </style>
 </head>
 
 <body>
 
-<div id="puzzleArea">
-  <div class="box">
-    <div>ひとつ目</div>
-    <div class="emoji-tabs" id="box1"></div>
-  </div>
+<div class="container">
 
-  <div class="box">
-    <div>ふたつ目</div>
-    <div class="emoji-tabs" id="box2"></div>
-  </div>
+  <!-- 紙吹雪レイヤー -->
+  <div id="confettiLayer" class="confetti-layer hidden"></div>
 
-  <button class="main" onclick="checkAnswer()">回答</button>
-</div>
-
-<div id="clearArea" class="hidden">
-  <div class="box">
-    <div style="font-size:20px; line-height:1.5;">
-      クリア！おめでとうございます！<br>
-      オーちゃんの秘蔵映像を差し上げます！
+  <div id="puzzleArea">
+    <div class="box">
+      <div style="font-weight:600;">ひとつ目</div>
+      <div class="emoji-tabs" id="box1"></div>
     </div>
+
+    <div class="box">
+      <div style="font-weight:600;">ふたつ目</div>
+      <div class="emoji-tabs" id="box2"></div>
+    </div>
+
+    <button class="main" onclick="checkAnswer()">回答</button>
   </div>
 
-  <button class="main" onclick="playFinalVideo()">秘蔵映像を再生</button>
+  <div id="clearArea" class="hidden">
+    <div class="box">
+      <div style="font-size:20px; line-height:1.6; font-weight:600;">
+        クリア！おめでとうございます！<br>
+        オーちゃんの秘蔵映像を差し上げます！
+      </div>
+    </div>
 
-  <video id="finalVideo" class="hidden" controls>
-    <source src="IMG_4487.mov" type="video/quicktime">
-  </video>
+    <button class="main" onclick="playFinalVideo()">秘蔵映像を再生</button>
+
+    <video id="finalVideo" class="hidden" controls>
+      <source src="IMG_4487.mov" type="video/quicktime">
+    </video>
+  </div>
+
 </div>
 
 <script>
-// ---- AudioContext ----
+// =======================
+// Audio
+// =======================
 let audioCtx;
 function getCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -88,7 +169,6 @@ function playMissSound(){
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-
   osc.type = "sawtooth";
   osc.frequency.setValueAtTime(220, ctx.currentTime);
 
@@ -99,6 +179,7 @@ function playMissSound(){
   osc.start(); osc.stop(ctx.currentTime + 0.35);
 }
 
+// 成功音（前と同じ最高音）
 function playSuccessSound(){
   const ctx = getCtx();
   const o1 = ctx.createOscillator();
@@ -120,35 +201,28 @@ function playSuccessSound(){
   o2.stop(ctx.currentTime + 0.8);
 }
 
-// ---- 絵文字暗号 ----
+// =======================
+// 絵文字暗号（ダミー被りなし）
+// =======================
 const correct1 = "🧳";
 const correct2 = "🍢";
 
-// ダミー候補（十分多めにして、被り回避）
 const dummyPool = ["🍎","🎈","🐸","🚲","🪐","📦","🦷","🍋","🎮","🧤","🧸","🧯","🪑","🪙","🧪","🧩"];
-
 let select1 = null;
 let select2 = null;
 
-function shuffle(arr){
-  return arr.slice().sort(()=>Math.random()-0.5);
-}
+function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
 
-// ✅ box1 と box2 で「ダミーが被らない」ように確保
 function makeDistinctDummies(nEach){
   const pool = dummyPool.filter(e => e !== correct1 && e !== correct2);
-  const picked = shuffle(pool).slice(0, nEach*2); // 例：4*2=8個
-  return {
-    d1: picked.slice(0, nEach),
-    d2: picked.slice(nEach, nEach*2)
-  };
+  const picked = shuffle(pool).slice(0, nEach*2);
+  return { d1: picked.slice(0,nEach), d2: picked.slice(nEach,nEach*2) };
 }
-
 const { d1, d2 } = makeDistinctDummies(4);
 
 function fillBox(elemId, correct, dummies, setter){
   const box = document.getElementById(elemId);
-  const list = shuffle([correct, ...dummies]); // 正解 + ダミー
+  const list = shuffle([correct, ...dummies]);
 
   list.forEach(emoji=>{
     const btn = document.createElement("button");
@@ -163,16 +237,59 @@ function fillBox(elemId, correct, dummies, setter){
     box.appendChild(btn);
   });
 }
-
 fillBox("box1", correct1, d1, e=>select1=e);
 fillBox("box2", correct2, d2, e=>select2=e);
 
+// =======================
+// 紙吹雪（軽量）
+// =======================
+function launchConfetti(){
+  const layer = document.getElementById("confettiLayer");
+  layer.classList.remove("hidden");
+  layer.innerHTML = "";
+
+  const pieces = 70; // 量（好みで増減OK）
+  for(let i=0;i<pieces;i++){
+    const p = document.createElement("div");
+    p.className = "confetti";
+
+    const left = Math.random() * 100;
+    const dx = (Math.random()*2 - 1) * 80;  // 横揺れ
+    const rot = (Math.random()*2 - 1) * 720; // 回転
+    const dur = 2.2 + Math.random()*1.6;
+
+    p.style.left = left + "vw";
+    p.style.setProperty("--dx", dx + "px");
+    p.style.setProperty("--rot", rot + "deg");
+    p.style.animationDuration = dur + "s";
+
+    // 色はランダム（明るめ）
+    const colors = ["#fb7185","#fbbf24","#34d399","#60a5fa","#a78bfa","#f472b6"];
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+
+    layer.appendChild(p);
+  }
+
+  // しばらくしたら消す
+  setTimeout(()=> {
+    layer.classList.add("hidden");
+    layer.innerHTML = "";
+  }, 3800);
+}
+
+// =======================
+// 判定
+// =======================
 function checkAnswer(){
   getCtx();
+
   if(select1 === correct1 && select2 === correct2){
     try{ playSuccessSound(); }catch(e){}
     document.getElementById("puzzleArea").classList.add("hidden");
     document.getElementById("clearArea").classList.remove("hidden");
+
+    // ✅ クリア後に紙吹雪
+    launchConfetti();
   }else{
     try{ playMissSound(); }catch(e){}
   }
