@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第一段階</title>
+
+<style>
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0b0b0b;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+button {
+  width: 85%;
+  max-width: 420px;
+  height: 90px;
+  font-size: 28px;
+  border-radius: 22px;
+  border: none;
+  background: #333;
+  color: white;
+}
+
+.hidden {
+  display: none;
+}
+
+video {
+  width: 92%;
+  max-width: 520px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>第一段階</h2>
+
+<div id="stage1">
+  <button onclick="press('ドリル')">ドリル</button>
+  <button onclick="press('コーポ')">コーポ</button>
+  <button onclick="press('うんこぽ')">うんこぽ</button>
+</div>
+
+<video id="video1" controls class="hidden">
+  <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
+</video>
+
+<button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
+
+<script>
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP';
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+const code = ['ドリル','ドリル','コーポ','うんこぽ','コーポ'];
+let input = [];
+
+const video = document.getElementById('video1');
+const nextBtn = document.getElementById('nextBtn');
+
+function press(word) {
+  speak(word);
+
+  input.push(word);
+  if (input.length > code.length) input.shift();
+
+  if (JSON.stringify(input) === JSON.stringify(code)) {
+    video.classList.remove('hidden');
+    video.pause();
+    video.currentTime = 0;
+    video.play();
+    nextBtn.classList.remove('hidden');
+    input = [];
+  }
+}
+
+function goNext() {
+  location.href = 'stage2.html';
+}
+</script>
+
+</body>
+</html>
