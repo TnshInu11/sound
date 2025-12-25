@@ -3,48 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>音声ボタン</title>
+  <title>秘密の暗号ボックス</title>
 
   <style>
     body {
       margin: 0;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      gap: 30px;
-      background: #f2f2f2;
+      justify-content: center;
+      gap: 20px;
+      background: #0b0b0b;
+      color: white;
     }
 
     button {
       width: 80%;
-      max-width: 400px;
-      height: 120px;
-      font-size: 36px;
-      border-radius: 20px;
+      max-width: 420px;
+      height: 100px;
+      font-size: 32px;
+      border-radius: 22px;
       border: none;
-      background: #222;
+      background: #333;
       color: white;
     }
 
     button:active {
-      background: #555;
+      background: #666;
+    }
+
+    video {
+      width: 90%;
+      max-width: 500px;
+      display: none;
+      margin-top: 20px;
+    }
+
+    .shake {
+      animation: shake 0.4s;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0); }
+      25% { transform: translate(-6px, 4px); }
+      50% { transform: translate(6px, -4px); }
+      75% { transform: translate(-6px, -4px); }
+      100% { transform: translate(0); }
     }
   </style>
 </head>
 <body>
 
-  <button onclick="speak('ドリル')">ドリル</button>
-  <button onclick="speak('コーポ')">コーポ</button>
-  <button onclick="speak('うんこぽ')">うんこぽ</button>
+  <button onclick="press('ドリル')">ドリル</button>
+  <button onclick="press('コーポ')">コーポ</button>
+  <button onclick="press('うんこぽ')">うんこぽ</button>
+
+  <video id="secretVideo" controls>
+    <source src="VGEnqRjvC3zEOb7-5rFPlHvJf5keeEOWXorlAyw9gM8.mp4" type="video/mp4">
+  </video>
 
   <script>
+    // 🔐 正解の暗号（同じ言葉を何回使ってもOK）
+    const secretCode = [
+      'ドリル',
+      'ドリル',
+      'コーポ',
+      'うんこぽ',
+      'コーポ'
+    ];
+
+    let input = [];
+
     function speak(text) {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'ja-JP';
       speechSynthesis.cancel();
       speechSynthesis.speak(u);
+    }
+
+    function press(word) {
+      speak(word);
+
+      input.push(word);
+      if (input.length > secretCode.length) {
+        input.shift();
+      }
+
+      if (JSON.stringify(input) === JSON.stringify(secretCode)) {
+        unlock();
+      }
+    }
+
+    function unlock() {
+      // 📳 振動（iPhone / Android）
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100, 50, 200]);
+      }
+
+      // 🫨 画面を揺らす
+      document.body.classList.add('shake');
+      setTimeout(() => {
+        document.body.classList.remove('shake');
+      }, 400);
+
+      // ✨ キラキラ音
+      playSparkle();
+
+      // 🎬 動画表示
+      const video = document.getElementById('secretVideo');
+      video.style.display = 'block';
+      video.play();
+    }
+
+    // ✨ 正解音（Web Audioで生成）
+    function playSparkle() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+      const freqs = [880, 1320, 1760];
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.3,
+          ctx.currentTime + 0.02 + i * 0.05
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.0001,
+          ctx.currentTime + 0.3 + i * 0.1
+        );
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.6);
+      });
     }
   </script>
 
