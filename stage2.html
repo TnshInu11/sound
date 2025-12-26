@@ -186,7 +186,7 @@ function setupVideoBoost(){
     videoGainNode = ctx.createGain();
 
     // 🔊 ブースト量（2.2〜3.0推奨）
-    videoGainNode.gain.value = 2.8;
+    videoGainNode.gain.value = 2.2;
 
     videoSourceNode.connect(videoGainNode);
     videoGainNode.connect(ctx.destination);
