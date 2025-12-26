@@ -173,15 +173,25 @@ function press(word){
   input.push(word);
   if(input.length > correctCode.length) input.shift();
 
-  if(JSON.stringify(input) === JSON.stringify(correctCode)){
-    try{ playSuccessSound(); }catch(e){}
-    nextBtn.classList.remove("hidden");
-    videoArea.classList.remove("hidden");
+if(JSON.stringify(input) === JSON.stringify(correctCode)){
+  try{ playSuccessSound(); }catch(e){}
+
+  nextBtn.classList.remove("hidden");
+  videoArea.classList.remove("hidden");
+  video.currentTime = 0;
+
+  // ① まず一度 play() だけする
+  video.play().then(()=>{
+    // ② 再生開始「後」に音量を最大へ
     video.volume = 1.0;
-    video.currentTime = 0;
-    video.play();
-    input = [];
-  }
+
+    // ③ さらに一瞬待ってもう一度念押し
+    setTimeout(()=> video.volume = 1.0, 80);
+  });
+
+  input = [];
+}
+
 }
 
 function goNext(){
