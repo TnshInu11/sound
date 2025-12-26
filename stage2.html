@@ -219,12 +219,15 @@ function press(word){
     video.volume = 1.0;     // 一応最大（効かなくてもブーストが効く）
     video.currentTime = 0;
 
-    // 少し待って再生（UI表示後の方が安定）
-    setTimeout(()=> {
-      video.play().catch(()=>{});
-      // 念押し（効く環境なら効く）
-      setTimeout(()=> video.volume = 1.0, 150);
-    }, 80);
+  setTimeout(()=> {
+  video.play().then(()=>{
+    // ✅ 再生開始後にフル画面要求
+    requestVideoFullscreen(video);
+  }).catch(()=>{});
+
+  setTimeout(()=> video.volume = 1.0, 150);
+}, 80);
+
 
     input = [];
   }
@@ -234,6 +237,18 @@ function goNext(){
   try{ playTapSound(); }catch(e){}
   setTimeout(()=> location.href = "final.html?v=" + VERSION, 180);
 }
+  function requestVideoFullscreen(v){
+  // iPhone Safari 用（非標準）
+  if (v.webkitEnterFullscreen) {
+    try { v.webkitEnterFullscreen(); } catch(e) {}
+    return;
+  }
+  // 標準
+  if (v.requestFullscreen) {
+    try { v.requestFullscreen(); } catch(e) {}
+  }
+}
+
 </script>
 
 </body>
