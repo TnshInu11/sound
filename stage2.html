@@ -36,32 +36,35 @@ button{
   word-break: break-all;
 }
 
-/* ✅ 次へ：ノーマル＋発光 */
+/* ✅ 次へ：強めチカチカ発光（定義は1つだけに整理） */
 @keyframes glow{
   0% {
     box-shadow:
-      0 0 6px rgba(255,255,255,0.3),
-      0 0 16px rgba(255,255,255,0.4),
-      0 0 32px rgba(255,255,255,0.2);
+      0 0 6px rgba(255,255,255,0.35),
+      0 0 18px rgba(255,255,255,0.45),
+      0 0 36px rgba(255,255,255,0.25);
   }
   50% {
     box-shadow:
-      0 0 20px rgba(255,255,255,0.9),
-      0 0 40px rgba(255,255,255,0.7),
-      0 0 80px rgba(255,255,255,0.5);
+      0 0 24px rgba(255,255,255,0.95),
+      0 0 52px rgba(255,255,255,0.75),
+      0 0 110px rgba(255,255,255,0.55);
   }
   100% {
     box-shadow:
-      0 0 10px rgba(255,255,255,0.4),
-      0 0 24px rgba(255,255,255,0.5),
-      0 0 48px rgba(255,255,255,0.3);
+      0 0 10px rgba(255,255,255,0.45),
+      0 0 28px rgba(255,255,255,0.55),
+      0 0 56px rgba(255,255,255,0.35);
   }
 }
 
-
-@keyframes glow{
-  from { box-shadow: 0 0 6px rgba(255,255,255,0.20), 0 0 14px rgba(255,255,255,0.10); }
-  to   { box-shadow: 0 0 14px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.22); }
+#nextBtn{
+  height:64px;
+  font-size:22px;
+  background:#333;
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.25);
+  animation: glow 0.55s ease-in-out infinite;
 }
 
 .video-wrap{ width:92%; max-width:520px; }
@@ -85,14 +88,16 @@ video{ width:100%; border-radius:16px; }
 <button id="nextBtn" class="hidden" onclick="goNext()">次へ</button>
 
 <div class="video-wrap hidden" id="videoArea">
-  <video id="video2" controls>
+  <!-- ✅ iPhone対策：playsinline -->
+  <video id="video2" controls playsinline>
     <source src="v4qf8VXZdo8DEEZ6GrCbcRM2-BpZFTevYFME5_N-C7k.mp4" type="video/mp4">
   </video>
 </div>
 
 <script>
-const VERSION = "20251226h";
+const VERSION = "20251226i";
 
+// ---- AudioContext ----
 let audioCtx;
 function getCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -100,6 +105,7 @@ function getCtx(){
   return audioCtx;
 }
 
+// ---- 読み上げ ----
 function speak(text){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -107,6 +113,7 @@ function speak(text){
   speechSynthesis.speak(u);
 }
 
+// ---- 成功音 ----
 function playSuccessSound(){
   const ctx = getCtx();
   const o1 = ctx.createOscillator();
@@ -128,6 +135,7 @@ function playSuccessSound(){
   o2.stop(ctx.currentTime + 0.8);
 }
 
+// ---- 次へタップ音 ----
 function playTapSound(){
   const ctx = getCtx();
   const osc = ctx.createOscillator();
@@ -143,7 +151,7 @@ function playTapSound(){
   osc.start(); osc.stop(ctx.currentTime + 0.12);
 }
 
-// 暗号（長さ7）
+// ---- 暗号（長さ7）----
 const correctCode = [
   'うんこーぷ','オーちゃん','コウモン','うんこーぷ','オーちゃん','うんこーぷ','コウモン'
 ];
@@ -155,16 +163,43 @@ const nextBtn = document.getElementById("nextBtn");
 
 // 数字列ヒント（内部対応）
 const map2 = { 'オーちゃん': '1', 'コウモン': '2', 'うんこーぷ': '3' };
-document.getElementById("hint2Code").textContent =
-  correctCode.map(x => map2[x]).join('');
+document.getElementById("hint2Code").textContent = correctCode.map(x => map2[x]).join('');
 
-// ヒント回数（そのまま：早め）
+// ヒント回数
 let pressCount = 0;
 const hintShowAt = 7;
 const hintElem = document.getElementById("hint2");
 
+// ✅ 動画音ブースト（ここが本命）
+let videoSourceNode = null;
+let videoGainNode = null;
+
+function setupVideoBoost(){
+  const ctx = getCtx();
+
+  // iOSはユーザー操作中にresumeが大事
+  if (ctx.state === "suspended") ctx.resume();
+
+  // MediaElementSourceは同じvideoで1回しか作れないので使い回す
+  if (!videoSourceNode) {
+    videoSourceNode = ctx.createMediaElementSource(video);
+    videoGainNode = ctx.createGain();
+
+    // 🔊 ブースト量（2.2〜3.0推奨）
+    videoGainNode.gain.value = 2.8;
+
+    videoSourceNode.connect(videoGainNode);
+    videoGainNode.connect(ctx.destination);
+  }
+}
+
 function press(word){
+  // ✅ まずユーザー操作の中でAudioContextを起こしておく
   getCtx();
+
+  // ✅ ついでに動画ブースト回路も（押してる最中に準備すると安定）
+  setupVideoBoost();
+
   speak(word);
 
   pressCount++;
@@ -173,25 +208,26 @@ function press(word){
   input.push(word);
   if(input.length > correctCode.length) input.shift();
 
-if(JSON.stringify(input) === JSON.stringify(correctCode)){
-  try{ playSuccessSound(); }catch(e){}
+  if(JSON.stringify(input) === JSON.stringify(correctCode)){
+    try{ playSuccessSound(); }catch(e){}
 
-  nextBtn.classList.remove("hidden");
-  videoArea.classList.remove("hidden");
-  video.currentTime = 0;
+    nextBtn.classList.remove("hidden");
+    videoArea.classList.remove("hidden");
 
-  // ① まず一度 play() だけする
-  video.play().then(()=>{
-    // ② 再生開始「後」に音量を最大へ
-    video.volume = 1.0;
+    // iOS向けの安全策
+    video.muted = false;
+    video.volume = 1.0;     // 一応最大（効かなくてもブーストが効く）
+    video.currentTime = 0;
 
-    // ③ さらに一瞬待ってもう一度念押し
-    setTimeout(()=> video.volume = 1.0, 200);
-  });
+    // 少し待って再生（UI表示後の方が安定）
+    setTimeout(()=> {
+      video.play().catch(()=>{});
+      // 念押し（効く環境なら効く）
+      setTimeout(()=> video.volume = 1.0, 150);
+    }, 80);
 
-  input = [];
-}
-
+    input = [];
+  }
 }
 
 function goNext(){
